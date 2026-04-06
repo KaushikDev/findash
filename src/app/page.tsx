@@ -1,14 +1,33 @@
 import TransactionForm from "@/components/TransactionForm";
+import TransactionRow from "@/components/TransactionRow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 
 export default async function Home() {
-  const { data: categories, error } = await supabase
+  const { data: categories, error: categoriesError } = await supabase
     .from("categories")
     .select("*");
-  console.log("Categories", categories);
-  console.log("Errors", error);
+
+  const { data: transactions, error: transactionError } = await supabase
+    .from("transactions")
+    .select("*");
+
+  const totalIncomeInDollars =
+    transactions
+      ?.filter((item) => item.category_id === 2)
+      ?.reduce((result, item) => {
+        return result + Number(item.amount);
+      }, 0) / 100;
+
+  const totalExpenseInDollars =
+    transactions
+      ?.filter((item) => item.category_id === 1)
+      ?.reduce((result, item) => {
+        return result + Number(item.amount);
+      }, 0) / 100;
+
+  console.log("total", totalExpenseInDollars);
   return (
     <main className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8 ">
@@ -21,7 +40,9 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
+            <div className="text-2xl font-bold">
+              ${(totalIncomeInDollars - totalExpenseInDollars).toFixed(2)}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -31,7 +52,9 @@ export default async function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-500">$0.00</div>
+            <div className="text-2xl font-bold text-emerald-500">
+              ${totalIncomeInDollars.toFixed(2)}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -41,12 +64,22 @@ export default async function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">$0.00</div>
+            <div className="text-2xl font-bold text-red-500">
+              ${totalExpenseInDollars.toFixed(2)}
+            </div>
           </CardContent>
         </Card>
       </div>
       <Card className="flex flex-col items-center justify-center h-64 border-dashed shadow-none">
-        <p className="text-muted-foreground mb-4">No transactions yet.</p>
+        {transactions && !transactions.length ? (
+          <p className="text-muted-foreground mb-4">No transactions yet.</p>
+        ) : (
+          <div className="flex flex-col items-center justify-center ">
+            {transactions?.map((item) => (
+              <TransactionRow key={item.id} item={item} />
+            ))}
+          </div>
+        )}
         <Button variant="outline">Add your first expense</Button>
       </Card>
       <div className="mt-8">
