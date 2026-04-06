@@ -1,4 +1,4 @@
-import TransactionForm from "@/components/TransactionForm";
+import AddTransactionModal from "@/components/AddTransactionModal";
 import TransactionRow from "@/components/TransactionRow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +32,8 @@ export default async function Home() {
     <main className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8 ">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <Button>+Add Transaction</Button>
+
+        <AddTransactionModal categories={categories || []} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
@@ -80,11 +81,8 @@ export default async function Home() {
             ))}
           </div>
         )}
-        <Button variant="outline">Add your first expense</Button>
+       <AddTransactionModal categories={categories || []} />
       </Card>
-      <div className="mt-8">
-        <TransactionForm categories={categories || []} />
-      </div>
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export interface Category {
   id: number;
@@ -13,11 +14,19 @@ export interface Category {
 
 interface TransactionFormProps {
   categories: Category[];
+  onSuccess?: () => void;
 }
 
-export default function TransactionForm({ categories }: TransactionFormProps) {
+export default function TransactionForm({
+  categories,
+  onSuccess,
+}: TransactionFormProps) {
+  const router = useRouter();
+
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const form = event.currentTarget;
 
     const formData = new FormData(event.currentTarget);
     const amount = formData.get("amount");
@@ -34,7 +43,9 @@ export default function TransactionForm({ categories }: TransactionFormProps) {
     ]);
 
     if (!error) {
-      event.currentTarget.reset();
+      form.reset();
+      if (onSuccess) onSuccess();
+      router.refresh();
       console.log("Transaction saved successfully");
     } else {
       console.log("Error while sending data to db", error);
