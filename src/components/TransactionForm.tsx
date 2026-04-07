@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export interface Category {
   id: number;
@@ -27,18 +28,29 @@ export default function TransactionForm({
     event.preventDefault();
 
     const form = event.currentTarget;
+    const formData = new FormData(form);
 
-    const formData = new FormData(event.currentTarget);
     const amount = formData.get("amount");
     const purpose = formData.get("purpose");
     const categoryId = formData.get("categoryId");
 
-    console.log(amount, purpose, categoryId);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error("Session Expired", {
+        description: "You must be logged in to do this.",
+      });
+      return;
+    }
+
     const { error } = await supabase.from("transactions").insert([
       {
         amount: Number(amount),
         description: purpose,
         category_id: Number(categoryId),
+        user_id: user.id,
       },
     ]);
 
@@ -46,9 +58,16 @@ export default function TransactionForm({
       form.reset();
       if (onSuccess) onSuccess();
       router.refresh();
-      console.log("Transaction saved successfully");
+      toast.success("Transaction saved successfully");
     } else {
-      console.log("Error while sending data to db", error);
+      console.error("Insert error:", error);
+
+      const errorMessage =
+        error?.message || "An unknown database error occurred";
+
+      toast.error("Error saving transaction", {
+        description: errorMessage,
+      });
     }
   };
 
@@ -71,6 +90,8 @@ export default function TransactionForm({
           />
           <select
             name="categoryId"
+            defaultValue=""
+            required
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="" disabled>

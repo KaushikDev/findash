@@ -20,6 +20,9 @@ export default function AddTransactionModal({
 }: AddTransactionModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+
+  
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
