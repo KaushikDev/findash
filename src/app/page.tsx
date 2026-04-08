@@ -4,6 +4,7 @@ import AddTransactionModal from "@/components/AddTransactionModal";
 import TransactionRow from "@/components/TransactionRow";
 import SignOutButton from "@/components/SignOutButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CreateBudgetModal from "@/components/CreateBudgetModal";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -60,6 +61,7 @@ export default async function Home() {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <AddTransactionModal categories={categories || []} />
+          <CreateBudgetModal />
         </div>
 
         <SignOutButton />
