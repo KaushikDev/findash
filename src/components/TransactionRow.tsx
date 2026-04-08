@@ -6,6 +6,8 @@ import { Button } from "./ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
+import { format } from "date-fns";
+
 export interface Transaction {
   id: number;
   amount: number;
@@ -54,7 +56,7 @@ export default function TransactionRow({ item }: TransactionRowProps) {
       <div>
         <p className="font-medium">{transactionType} transaction</p>
         <p className="text-sm text-muted-foreground">
-          Date: {new Date(item.created_at).toLocaleDateString()}
+          Date: {format(new Date(item.created_at), "MM/dd/yyyy")}
         </p>
       </div>
 
