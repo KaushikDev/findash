@@ -65,3 +65,44 @@ export async function createBudget(formData: FormData) {
 
   revalidatePath("/");
 }
+
+
+
+export async function createTransaction(formData: FormData) {
+  const supabase = await createSupabaseServer(); // Using your clean helper!
+
+  // 1. Secure the route
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Session expired, please login again");
+
+  // 2. Extract the data from your Next.js form
+  const amount = formData.get("amount");
+  const purpose = formData.get("purpose");
+  const categoryId = formData.get("categoryId");
+  const budgetId = formData.get("budgetId");
+
+  if (!amount || !purpose || !categoryId || !budgetId) {
+    throw new Error("Missing required fields for transaction");
+  }
+
+  // 3. Push to the database
+  const { error } = await supabase.from("transactions").insert([
+    {
+      amount: Number(amount), // Your frontend already asks for cents, so this is perfect
+      description: purpose as string,
+      category_id: Number(categoryId),
+      budget_id: Number(budgetId), // This ties the transaction to the specific month!
+      user_id: user.id,
+    },
+  ]);
+
+  if (error) {
+    console.error("Database Insert Error:", error);
+    throw new Error(error.message);
+  }
+
+  // 4. Instantly refresh the dashboard math and UI
+  revalidatePath("/");
+}
