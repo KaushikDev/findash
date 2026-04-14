@@ -13,10 +13,12 @@ import TransactionForm, { Category } from "./TransactionForm";
 
 interface AddTransactionModalProps {
   categories: Category[];
+  budgetId: string;
 }
 
 export default function AddTransactionModal({
   categories,
+  budgetId
 }: AddTransactionModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -35,6 +37,7 @@ export default function AddTransactionModal({
         </DialogHeader>
         <TransactionForm
           categories={categories || []}
+          budgetId={budgetId}
           onSuccess={() => setIsOpen(false)}
         />
       </DialogContent>

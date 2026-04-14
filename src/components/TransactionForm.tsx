@@ -2,71 +2,44 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { createTransaction } from "@/app/db/actions";
 
+// 1. Updated Interface to match your new flattened Enterprise data
 export interface Category {
   id: number;
   name: string;
-  budget_limit: number;
+  limit_amount: number;
   icon: string;
+  type: string;
 }
 
+// 2. Added budgetId to the props so TypeScript stops yelling
 interface TransactionFormProps {
   categories: Category[];
+  budgetId: string;
   onSuccess?: () => void;
 }
 
 export default function TransactionForm({
   categories,
+  budgetId,
   onSuccess,
 }: TransactionFormProps) {
-  const router = useRouter();
-
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
+    try {
+      // 3. Fire the secure Server Action
+      await createTransaction(formData);
 
-    const amount = formData.get("amount");
-    const purpose = formData.get("purpose");
-    const categoryId = formData.get("categoryId");
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      toast.error("Session Expired", {
-        description: "You must be logged in to do this.",
-      });
-      return;
-    }
-
-    const { error } = await supabase.from("transactions").insert([
-      {
-        amount: Number(amount),
-        description: purpose,
-        category_id: Number(categoryId),
-        user_id: user.id,
-      },
-    ]);
-
-    if (!error) {
-      form.reset();
+      event.currentTarget.reset();
       if (onSuccess) onSuccess();
-      router.refresh();
       toast.success("Transaction saved successfully");
-    } else {
-      console.error("Insert error:", error);
-
-      const errorMessage =
-        error?.message || "An unknown database error occurred";
-
+    } catch (error: any) {
       toast.error("Error saving transaction", {
-        description: errorMessage,
+        description: error.message || "Something went wrong.",
       });
     }
   };
@@ -76,6 +49,8 @@ export default function TransactionForm({
       <h2 className="text-lg font-semibold mb-4">Add Transaction</h2>
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
+          <input type="hidden" name="budgetId" value={budgetId} />
+
           <Input
             type="number"
             name="amount"
