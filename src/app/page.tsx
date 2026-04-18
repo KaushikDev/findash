@@ -51,19 +51,9 @@ export default async function Home({
     );
   }
 
-
   const { data: allGlobalCategories, error: globalCategoryError } =
     await supabase.from("categories").select("*");
 
-  const { data: allocations, error: allocationsError } = await supabase
-    .from("budget_allocations")
-    .select(
-      `
-      limit_amount,
-      categories (id, name, icon, type)
-    `,
-    )
-    .eq("budget_id", budgetId);
   const { data: transactions, error: transactionError } = await supabase
     .from("transactions")
     .select("*")
@@ -83,11 +73,8 @@ export default async function Home({
       ?.filter((item) => categoryTypeMap.get(item.category_id) === "expense")
       ?.reduce((result, item) => result + Number(item.amount), 0) || 0) / 100;
 
-  if (allocationsError || transactionError || globalCategoryError) {
-    console.error(
-      "Database Error:",
-      allocationsError || transactionError || globalCategoryError,
-    );
+  if (transactionError || globalCategoryError) {
+    console.error("Database Error:", transactionError || globalCategoryError);
     return (
       <main className="p-8 max-w-7xl mx-auto min-h-[60vh] flex items-center justify-center">
         <div className="text-center space-y-4 p-8 border border-red-200 bg-red-50/50 rounded-xl max-w-md">
@@ -95,7 +82,8 @@ export default async function Home({
             Failed to load data
           </h2>
           <p className="text-red-500 text-sm">
-            We couldn't connect to the database. Please try refreshing the page.
+            We couldn&apos;t connect to the database. Please try refreshing the
+            page.
           </p>
         </div>
       </main>

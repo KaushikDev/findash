@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createTransaction } from "@/app/db/actions";
+import { useState } from "react";
 
 // 1. Updated Interface to match your new flattened Enterprise data
 export interface Category {
   id: number;
   name: string;
-  limit_amount: number;
-  icon: string;
+  group: string;
   type: string;
 }
 
@@ -26,23 +26,46 @@ export default function TransactionForm({
   budgetId,
   onSuccess,
 }: TransactionFormProps) {
+  const [transactionType, setTransactionType] = useState("expense");
+
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
     const formData = new FormData(event.currentTarget);
 
     try {
       // 3. Fire the secure Server Action
       await createTransaction(formData);
 
-      event.currentTarget.reset();
+      form.reset();
       if (onSuccess) onSuccess();
       toast.success("Transaction saved successfully");
-    } catch (error: any) {
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while saving transaction.";
       toast.error("Error saving transaction", {
-        description: error.message || "Something went wrong.",
+        description: errorMsg,
       });
     }
   };
+
+  const filteredCategories = categories.filter(
+    (item) => item.type === transactionType,
+  );
+
+  const groupedCategories = filteredCategories.reduce(
+    (acc, category) => {
+      if (!acc[category.group]) {
+        acc[category.group] = [];
+      }
+
+      acc[category.group].push(category);
+      return acc;
+    },
+    {} as Record<string, Category[]>,
+  );
 
   return (
     <div className="p-4 border rounded-xl bg-card text-card-foreground shadow">
@@ -50,7 +73,8 @@ export default function TransactionForm({
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <input type="hidden" name="budgetId" value={budgetId} />
-
+          <button onClick={() => setTransactionType("expense")}>Expense</button>
+          <button onClick={() => setTransactionType("income")}>Income</button>
           <Input
             type="number"
             name="amount"
@@ -60,8 +84,7 @@ export default function TransactionForm({
           <Input
             type="text"
             name="purpose"
-            placeholder="What was this for?"
-            required
+            placeholder="Description (optional)"
           />
           <select
             name="categoryId"
@@ -72,11 +95,17 @@ export default function TransactionForm({
             <option value="" disabled>
               Select a category...
             </option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {Object.entries(groupedCategories).map(
+              ([groupName, groupItems]) => (
+                <optgroup key={groupName} label={groupName}>
+                  {groupItems.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ),
+            )}
           </select>
           <Button type="submit" className="w-full">
             Save Transaction
