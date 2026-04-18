@@ -66,8 +66,6 @@ export async function createBudget(formData: FormData) {
   revalidatePath("/");
 }
 
-
-
 export async function createTransaction(formData: FormData) {
   const supabase = await createSupabaseServer(); // Using your clean helper!
 
@@ -83,7 +81,7 @@ export async function createTransaction(formData: FormData) {
   const categoryId = formData.get("categoryId");
   const budgetId = formData.get("budgetId");
 
-  if (!amount || !purpose || !categoryId || !budgetId) {
+  if (!amount || !categoryId || !budgetId) {
     throw new Error("Missing required fields for transaction");
   }
 
