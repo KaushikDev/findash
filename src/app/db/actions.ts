@@ -67,7 +67,7 @@ export async function createBudget(formData: FormData) {
 }
 
 export async function createTransaction(formData: FormData) {
-  const supabase = await createSupabaseServer(); // Using your clean helper!
+  const supabase = await createSupabaseServer();
 
   // 1. Secure the route
   const {
@@ -88,10 +88,10 @@ export async function createTransaction(formData: FormData) {
   // 3. Push to the database
   const { error } = await supabase.from("transactions").insert([
     {
-      amount: Number(amount), // Your frontend already asks for cents, so this is perfect
+      amount: Math.round(Number(amount) * 100),
       description: purpose as string,
       category_id: Number(categoryId),
-      budget_id: Number(budgetId), // This ties the transaction to the specific month!
+      budget_id: Number(budgetId),
       user_id: user.id,
     },
   ]);
