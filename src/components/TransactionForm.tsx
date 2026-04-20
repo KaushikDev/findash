@@ -2,6 +2,15 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { createTransaction } from "@/app/db/actions";
 import { useState } from "react";
@@ -73,8 +82,23 @@ export default function TransactionForm({
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <input type="hidden" name="budgetId" value={budgetId} />
-          <button onClick={() => setTransactionType("expense")}>Expense</button>
-          <button onClick={() => setTransactionType("income")}>Income</button>
+          <div className="flex gap-2 w-full mb-4">
+            <Button
+              variant={transactionType === "expense" ? "default" : "outline"}
+              type="button"
+              onClick={() => setTransactionType("expense")}
+            >
+              Expense
+            </Button>
+            <Button
+              variant={transactionType === "income" ? "default" : "outline"}
+              type="button"
+              onClick={() => setTransactionType("income")}
+            >
+              Income
+            </Button>
+          </div>
+
           <Input
             type="number"
             name="amount"
@@ -86,27 +110,31 @@ export default function TransactionForm({
             name="purpose"
             placeholder="Description (optional)"
           />
-          <select
-            name="categoryId"
-            defaultValue=""
-            required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="" disabled>
-              Select a category...
-            </option>
-            {Object.entries(groupedCategories).map(
-              ([groupName, groupItems]) => (
-                <optgroup key={groupName} label={groupName}>
-                  {groupItems.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ),
-            )}
-          </select>
+          <Select name="categoryId" required>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a category..." />
+            </SelectTrigger>
+            <SelectContent position="popper" className="max-h-[350px]">
+              {Object.entries(groupedCategories).map(
+                ([groupName, groupItems]) => (
+                  <SelectGroup key={groupName} className="mb-2">
+                    <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-bold pl-2">
+                      {groupName}
+                    </SelectLabel>
+                    {groupItems.map((category) => (
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                        className="pl-6 cursor-pointer"
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ),
+              )}
+            </SelectContent>
+          </Select>
           <Button type="submit" className="w-full">
             Save Transaction
           </Button>

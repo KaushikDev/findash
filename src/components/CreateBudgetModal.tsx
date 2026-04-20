@@ -15,8 +15,6 @@ import { useRouter } from "next/navigation";
 import { Input } from "./ui/input";
 import { Calendar } from "./ui/calendar";
 
-
-
 export default function CreateBudgetModal() {
   const [open, setIsOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
@@ -41,7 +39,7 @@ export default function CreateBudgetModal() {
       <DialogTrigger asChild>
         <Button>Add new Budget</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create new budget</DialogTitle>
         </DialogHeader>
@@ -59,18 +57,20 @@ export default function CreateBudgetModal() {
               placeholder="Enter budget amount"
               required
             />
-            <Calendar
-              mode="single"
-              selected={startDate}
-              onSelect={setStartDate}
-              initialFocus
-            />
-            <Calendar
-              mode="single"
-              selected={endDate}
-              onSelect={setEndDate}
-              initialFocus
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                initialFocus
+              />
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                initialFocus
+              />
+            </div>
             <input
               type="hidden"
               name="startDate"

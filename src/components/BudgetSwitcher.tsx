@@ -42,18 +42,12 @@ export default function BudgetSwitcher({ budgets }: BudgetSwitcherProps) {
     (budget) => budget.id.toString() === currentBudgetId,
   );
 
-const handleSelect = (budgetId: string) => {
+  const handleSelect = (budgetId: string) => {
     setOpen(false);
-    
-    // 1. Build the new URL cleanly
     const params = new URLSearchParams(searchParams.toString());
     params.set("budgetId", budgetId);
-    
-    // 2. Use the Next.js soft router
     router.push(`/?${params.toString()}`);
-    
-    // 3. Tell Next.js to quietly re-run the server component in the background
-    router.refresh(); 
+    router.refresh();
   };
 
   return (
