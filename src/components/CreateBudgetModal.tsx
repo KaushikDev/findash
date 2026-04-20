@@ -54,7 +54,8 @@ export default function CreateBudgetModal() {
             <Input
               type="number"
               name="totalLimit"
-              placeholder="Enter budget amount"
+              placeholder="Please enter your budget amount"
+              step="0.01"
               required
             />
             <div className="grid grid-cols-2 gap-4">

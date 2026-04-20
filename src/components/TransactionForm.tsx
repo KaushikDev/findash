@@ -102,7 +102,8 @@ export default function TransactionForm({
           <Input
             type="number"
             name="amount"
-            placeholder="Amount in cents"
+            placeholder="Please enter your transaction amount"
+            step="0.01"
             required
           />
           <Input

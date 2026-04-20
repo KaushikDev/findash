@@ -12,6 +12,7 @@ export default async function Home({
 }: {
   searchParams: Promise<{ budgetId?: string }>;
 }) {
+  let budgetForecast = 0;
   const cookieStore = await cookies();
 
   const resolvedSearchParams = await searchParams; // <-- We AWAIT the URL parameters
@@ -29,13 +30,15 @@ export default async function Home({
 
   const { data: budgets, error: budgetsError } = await supabase
     .from("budgets")
-    .select("id, name")
+    .select("id, name, start_date, end_date, total_limit")
     .order("start_date");
 
   const safeBudgets = budgets || [];
   const budgetId =
     resolvedSearchParams?.budgetId ||
     (safeBudgets.length > 0 ? safeBudgets[0].id.toString() : "");
+
+  const activeBudget = safeBudgets.find((b) => b.id.toString() === budgetId);
 
   if (!budgetId) {
     return (
@@ -73,6 +76,36 @@ export default async function Home({
       ?.filter((item) => categoryTypeMap.get(item.category_id) === "expense")
       ?.reduce((result, item) => result + Number(item.amount), 0) || 0) / 100;
 
+  const limitInDollars = activeBudget
+    ? Number(activeBudget.total_limit) / 100
+    : 0;
+  const percentageUsed =
+    limitInDollars > 0 ? (totalExpenseInDollars / limitInDollars) * 100 : 0;
+
+  const startDate = new Date(activeBudget?.start_date);
+  const endDate = new Date(activeBudget?.end_date);
+  const today = new Date();
+
+  const totalBudgetDays = Math.max(
+    1,
+    Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+    ),
+  );
+
+  const totalPassedDays = Math.max(
+    1,
+    Math.min(
+      totalBudgetDays,
+      Math.ceil(
+        (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    ),
+  );
+
+  const dailyAvgSpending = totalExpenseInDollars / totalPassedDays;
+  budgetForecast = dailyAvgSpending * totalBudgetDays;
+
   if (transactionError || globalCategoryError) {
     console.error("Database Error:", transactionError || globalCategoryError);
     return (
@@ -107,38 +140,65 @@ export default async function Home({
         <SignOutButton />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${(totalIncomeInDollars - totalExpenseInDollars).toFixed(2)}
+      <div className="mb-8">
+        <Card className="shadow-sm">
+          <CardHeader className="border-b bg-muted/20 pb-4">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-2xl font-bold">
+                {activeBudget?.name}
+              </CardTitle>
+              <div className="text-sm text-muted-foreground font-medium bg-background px-3 py-1 rounded-full border">
+                {activeBudget?.start_date} to {activeBudget?.end_date}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Monthly Income
-            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-500">
-              ${totalIncomeInDollars.toFixed(2)}
+          <CardContent className="pt-6">
+            {/* The 4-Stat Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+              <div className="flex flex-col space-y-1">
+                <span className="text-sm text-muted-foreground font-medium">
+                  Amount Set For
+                </span>
+                <span className="text-2xl font-bold">
+                  ${limitInDollars.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <span className="text-sm text-muted-foreground font-medium">
+                  Total Spent
+                </span>
+                <span className="text-2xl font-bold text-rose-500">
+                  ${totalExpenseInDollars.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <span className="text-sm text-muted-foreground font-medium">
+                  Forecast
+                </span>
+                <span className="text-2xl font-bold">
+                  ${budgetForecast.toFixed(2)}
+                </span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Monthly Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              ${totalExpenseInDollars.toFixed(2)}
+
+            {/* The Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span>Current Status</span>
+                <span
+                  className={
+                    percentageUsed > 100 ? "text-rose-500 font-bold" : ""
+                  }
+                >
+                  {percentageUsed.toFixed(1)}% Used
+                </span>
+              </div>
+              <div className="h-3 w-full bg-secondary rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${percentageUsed > 100 ? "bg-rose-500" : "bg-primary"}`}
+                  style={{ width: `${Math.min(percentageUsed, 100)}%` }}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
