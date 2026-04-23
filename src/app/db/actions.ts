@@ -29,13 +29,18 @@ async function createSupabaseServer() {
   );
 }
 
-export async function createBudget(formData: FormData) {
+async function getSecureClient() {
   const supabase = await createSupabaseServer();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Session expired, please login again");
+
+  return { supabase, user };
+}
+
+export async function createBudget(formData: FormData) {
+  const { supabase, user } = await getSecureClient();
 
   const name = formData.get("name") as string;
   const totalLimit = formData.get("totalLimit") as string;
@@ -67,13 +72,7 @@ export async function createBudget(formData: FormData) {
 }
 
 export async function createTransaction(formData: FormData) {
-  const supabase = await createSupabaseServer();
-
-  // 1. Secure the route
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Session expired, please login again");
+  const { supabase, user } = await getSecureClient();
 
   // 2. Extract the data from your Next.js form
   const amount = formData.get("amount");
@@ -101,6 +100,32 @@ export async function createTransaction(formData: FormData) {
     throw new Error(error.message);
   }
 
-  // 4. Instantly refresh the dashboard math and UI
+  revalidatePath("/");
+}
+
+export async function deleteBudget(budgetId: string) {
+  const { supabase } = await getSecureClient();
+
+  const { error } = await supabase.from("budgets").delete().eq("id", budgetId);
+
+  if (error) {
+    throw new Error("Budget deletion couldn't be completed!!!");
+  }
+
+  revalidatePath("/");
+}
+
+export async function deleteTransaction(transactionId: number) {
+  const { supabase } = await getSecureClient();
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", transactionId);
+
+  if (error) {
+    throw new Error("Failed to delete transaction");
+  }
+
   revalidatePath("/");
 }

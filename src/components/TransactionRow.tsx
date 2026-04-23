@@ -1,18 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ConfirmActionButton } from "@/components/ConfirmActionButton";
+import { deleteTransaction } from "@/app/db/actions"; // Adjust this path if needed to point to your actions.ts
 
 export interface Transaction {
   id: number;
   amount: number;
   created_at: string;
   category_id: number;
-  description: string; // Added description!
+  description: string;
 }
 
 export interface Category {
@@ -23,39 +21,24 @@ export interface Category {
 
 interface TransactionRowProps {
   item: Transaction;
-  categories: Category[]; // We will pass the global list down!
+  categories: Category[];
 }
 
 export default function TransactionRow({
   item,
   categories,
 }: TransactionRowProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const router = useRouter();
-
-  // Dynamically find the category details from the global list
   const category = categories.find((c) => c.id === item.category_id);
   const transactionName = category ? category.name : "Unknown Category";
   const isIncome = category?.type === "income";
 
   const handleDelete = async () => {
     try {
-      setIsDeleting(true);
-
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", item.id);
-
-      if (error) throw error;
-
+      await deleteTransaction(item.id);
       toast.success("Transaction deleted successfully");
-      router.refresh();
     } catch (error) {
       console.error("Database error:", error);
       toast.error("Error deleting transaction");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -81,14 +64,15 @@ export default function TransactionRow({
         >
           {isIncome ? "+" : "-"}${(item.amount / 100).toFixed(2)}
         </span>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleDelete}
-          disabled={isDeleting}
-        >
-          {isDeleting ? "..." : "Delete"}
-        </Button>
+
+        {/* Look how clean this is now! */}
+        <ConfirmActionButton
+          variant="danger-button"
+          label="Delete"
+          onConfirm={handleDelete}
+          title="Delete this transaction?"
+          description="This action is irreversible and cannot be undone!! Please confirm."
+        />
       </div>
     </div>
   );
