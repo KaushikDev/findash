@@ -6,6 +6,7 @@ import SignOutButton from "@/components/SignOutButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CreateBudgetModal from "@/components/CreateBudgetModal";
 import BudgetSwitcher from "@/components/BudgetSwitcher";
+import { DeleteBudgetAction } from "@/components/DeleteBudgetAction";
 
 export default async function Home({
   searchParams,
@@ -185,6 +186,7 @@ export default async function Home({
                   <CardTitle className="text-2xl font-bold">
                     {activeBudget?.name}
                   </CardTitle>
+                  <DeleteBudgetAction budgetId={budgetId} />
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${healthColor}`}
                   >
